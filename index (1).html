@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Student Grade Report</title>
+
+<style>
+body {
+    font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
+    background: #B6C7D6;
+    color: black;
+    margin: 0;
+}
+
+/* HEADER */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+}
+
+.logo {
+    width: 100px;
+}
+
+.title {
+    text-align: center;
+    flex: 1;
+}
+
+/* 🔥 SEARCH TOP (NOW ABOVE EVERYTHING) */
+.search-bar {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px;
+    margin-top: 10px;
+}
+
+.search-bar input {
+    width: 300px;
+    padding: 10px;
+    border-radius: 5px;
+    border: none;
+}
+
+.search-bar button {
+    padding: 10px 12px;
+    border: none;
+    background: white;
+    color: #800000;
+    font-weight: bold;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+/* 🔥 FORM TOOLBAR (HORIZONTAL) */
+.toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 15px;
+    overflow-x: auto;
+}
+
+.toolbar input {
+    padding: 8px;
+    width: 120px;
+    border-radius: 5px;
+    border: none;
+    flex-shrink: 0;
+}
+
+.toolbar button {
+    padding: 8px 12px;
+    border: none;
+    background: white;
+    color: #800000;
+    font-weight: bold;
+    border-radius: 5px;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+/* TABLE */
+.container {
+    padding: 20px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    color: black;
+}
+
+th {
+    background: maroon;
+    color: white;
+    padding: 10px;
+}
+
+td {
+    text-align: center;
+    padding: 8px;
+}
+
+</style>
+</head>
+
+<body>
+
+<!-- HEADER -->
+<div class="header">
+    <img src="bsit.png" class="logo">
+
+    <div class="title">
+        <h1>STUDENT GRADE REPORT</h1>
+        <p>Bachelor of Science in Information Technology</p>
+        <p>Passi City College</p>
+    </div>
+
+    <img src="slogo.png" class="logo">
+</div>
+
+<!-- 🔥 SEARCH BAR (NOW TOP PRIORITY) -->
+<div class="search-bar">
+    <input id="searchInput" placeholder="Search name...">
+    <button onclick="searchData()">Search</button>
+    <button onclick="clearSearch()">Clear</button>
+</div>
+
+<!-- 🔥 INPUT FORM (BELOW SEARCH) -->
+<div class="toolbar">
+    <input id="name" placeholder="Name">
+    <input id="quiz" type="number" placeholder="Quiz (20%)">
+    <input id="lab" type="number" placeholder="Laboratory (30%)">
+    <input id="assign" type="number" placeholder="Assignment (10%)">
+    <input id="attend" type="number" placeholder="Attendance (10%)">
+    <input id="exam" type="number" placeholder="Major Exam (30%)">
+
+    <button onclick="saveData()">Save</button>
+</div>
+
+<!-- TABLE -->
+<div class="container">
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Quiz((20%)</th>
+<th>Laboratory (30%)</th>
+<th>Assignment(10%)</th>
+<th>Attendance (10%)</th>
+<th>Major Exam (30%)</th>
+<th>Final</th>
+<th>Eq</th>
+<th>Remark</th>
+<th>Action</th>
+</tr>
+</thead>
+
+<tbody id="tableBody"></tbody>
+</table>
+</div>
+
+<script>
+
+let records = JSON.parse(localStorage.getItem("records")) || [];
+let editIndex = -1;
+
+/* SAVE */
+function saveData() {
+
+    const data = {
+        name: document.getElementById("name").value.trim(),
+        quiz: Number(document.getElementById("quiz").value),
+        lab: Number(document.getElementById("lab").value),
+        assign: Number(document.getElementById("assign").value),
+        attend: Number(document.getElementById("attend").value),
+        exam: Number(document.getElementById("exam").value)
+    };
+
+    if (!data.name) {
+        alert("Enter name!");
+        return;
+    }
+
+    if (editIndex === -1) {
+        records.push(data);
+    } else {
+        records[editIndex] = data;
+        editIndex = -1;
+    }
+
+    localStorage.setItem("records", JSON.stringify(records));
+    clearInputs();
+    display(records);
+}
+
+/* COMPUTE */
+function compute(r) {
+    return (
+        r.quiz * 0.20 +
+        r.lab * 0.30 +
+        r.assign * 0.10 +
+        r.attend * 0.10 +
+        r.exam * 0.30
+    ).toFixed(2);
+}
+
+/* DISPLAY */
+function display(dataArray) {
+
+    let tableBody = document.getElementById("tableBody");
+    let rows = "";
+
+    for (let i = 0; i < dataArray.length; i++) {
+
+        let r = dataArray[i];
+
+        let final = compute(r);
+        let eq = final >= 75 ? "2.0" : "5.0";
+        let remark = eq === "5.0" ? "FAILED" : "PASSED";
+
+        rows += `
+        <tr>
+            <td>${r.name}</td>
+            <td>${r.quiz}</td>
+            <td>${r.lab}</td>
+            <td>${r.assign}</td>
+            <td>${r.attend}</td>
+            <td>${r.exam}</td>
+            <td>${final}</td>
+            <td>${eq}</td>
+            <td>${remark}</td>
+            <td>
+                <button onclick="editData(${i})">Edit</button>
+                <button onclick="deleteData(${i})">Delete</button>
+            </td>
+        </tr>`;
+    }
+
+    tableBody.innerHTML = rows;
+}
+
+/* SEARCH */
+function searchData() {
+
+    let keyword = document.getElementById("searchInput").value.toLowerCase();
+
+    let filtered = records.filter(r =>
+        r.name.toLowerCase().includes(keyword)
+    );
+
+    display(filtered);
+}
+
+/* CLEAR SEARCH */
+function clearSearch() {
+    document.getElementById("searchInput").value = "";
+    display(records);
+}
+
+/* EDIT */
+function editData(index) {
+
+    let r = records[index];
+
+    document.getElementById("name").value = r.name;
+    document.getElementById("quiz").value = r.quiz;
+    document.getElementById("lab").value = r.lab;
+    document.getElementById("assign").value = r.assign;
+    document.getElementById("attend").value = r.attend;
+    document.getElementById("exam").value = r.exam;
+
+    editIndex = index;
+}
+
+/* DELETE */
+function deleteData(index) {
+    records.splice(index, 1);
+    localStorage.setItem("records", JSON.stringify(records));
+    display(records);
+}
+
+/* CLEAR INPUTS */
+function clearInputs() {
+    document.getElementById("name").value = "";
+    document.getElementById("quiz").value = "";
+    document.getElementById("lab").value = "";
+    document.getElementById("assign").value = "";
+    document.getElementById("attend").value = "";
+    document.getElementById("exam").value = "";
+}
+
+/* INIT */
+display(records);
+
+</script>
+
+</body>
+</html>
